@@ -1,121 +1,120 @@
-========================================================================
-                 MIMI HD VINTAGE FILM PHOTOBOOTH
-========================================================================
+# 📸 Mimi HD Vintage Film Photobooth
 
-A lightweight, fully responsive, web-based analog photobooth application 
-that captures live camera frames and composite-renders printable vintage 
-photo strips directly in the browser using JavaScript, HTML5 Canvas, 
-Alpine.js, and Tailwind CSS.
+A lightweight, responsive, browser-based vintage photobooth web application. Built with **Alpine.js**, **Tailwind CSS**, and the native **HTML5 Canvas API**, this application captures live webcam feeds and processes high-definition composite film strips for instant download and printing.
 
-------------------------------------------------------------------------
-TABLE OF CONTENTS
-------------------------------------------------------------------------
-1. Key Features
-2. Technical Stack & Dependencies
-3. File Structure
-4. Getting Started
-5. Application Usage Guide
-6. Customization & Styling
-7. Browser Compatibility & Notes
+---
 
-------------------------------------------------------------------------
-1. KEY FEATURES
-------------------------------------------------------------------------
-• Live Webcam Stream & Capture:
-  - WebRTC camera integration with automatic fallback to generated sample frames.
-  - Interactive controls for video horizontal mirroring and synthetic sound effects.
-  - Automated 4-shot sequence with a 3-second visual countdown and flash animation.
-  - Single snap mode and individual frame retake capability.
+## ✨ Features
 
-• Vintage Filters & Post-Processing:
-  - Real-time CSS live camera filters (Sepia, Monochrome, Warm Retro, Cyber Pink, B&W, 90s Color Film).
-  - Canvas post-processing for Silver Halide Film Grain noise and Vintage Lens Vignette.
+- **Live Webcam Integration**
+  - Real-time video stream using WebRTC (`navigator.mediaDevices.getUserMedia`).
+  - Video mirror toggle for natural framing.
+  - Automated **4-photo sequence** with a 3-second visual countdown and dynamic screen-flash animation.
+  - Ability to snap single frames or retake specific frames individually.
+  - Built-in fallback demo photos when camera access is restricted.
 
-• Layout & Strip Customization:
-  - Multiple strip dimensions:
-      * 1.5 x 6" Photo Strip (Vertical 1:4)
-      * 2 x 8" Extended Strip (Vertical 1:4)
-      * 2 x 2" Photo Grid (1:1 Aspect)
-  - Customizable theme backgrounds (Classic Black, Charcoal, Vintage Pink, Polaroid White).
-  - Configurable outer padding, photo spacing (supports zero gap / seamless layout), and 35mm sprocket perforations.
-  - Customizable text signatures, date stamps, and typography choices.
+- **Vintage Camera Filters & Visual Effects**
+  - Live CSS camera filters: *Vintage Sepia*, *Monochrome Film*, *Warm Retro*, *Cyber Pink*, *Grainy B&W*, *90s Color Film*, and *Standard Color*.
+  - Real-time Canvas post-processing for **Silver Halide Film Grain** simulation and **Vintage Lens Vignette**.
 
-• Export & Printing:
-  - High-resolution HTML5 Canvas rendering scaled for print output.
-  - Direct PNG download and clean print window triggers.
+- **Customizable Layouts & Themes**
+  - **3 Preset Dimensions**:
+    - `1.5 x 6"` Photo Strip (Classic 1:4 vertical layout)
+    - `2 x 8"` Extended Strip (1:4 vertical layout)
+    - `2 x 2"` Grid Layout (1:1 square ratio)
+  - **Background Themes**: Classic Black, Charcoal, Vintage Pink, and Polaroid White.
+  - Adjustable margin and inner padding sliders (supports **0px seamless layouts**).
+  - Optional **35mm side film sprocket perforations**.
+  - Customizable title signature, date stamps, and font choices (*Share Tech Mono*, *Courier Prime*, *Caveat*, *Pacifico*, *Playfair Display*).
 
-------------------------------------------------------------------------
-2. TECHNICAL STACK & DEPENDENCIES
-------------------------------------------------------------------------
-• HTML5 & HTML5 Canvas API (Vector/Bitmap rendering)
-• Alpine.js v3.x (Reactive UI & state management)
-• Tailwind CSS (Utility-first styling via CDN)
-• FontAwesome v6.4.0 (UI Icons)
-• Web Audio API (Synthesized shutter and countdown beeps)
-• Google Fonts:
-  - Fredoka (Sans-serif)
-  - Caveat & Pacifico (Cursive / Script)
-  - Playfair Display (Serif)
-  - Courier Prime & Share Tech Mono (Monospace)
+- **Audio & Export Options**
+  - Synthesized shutter sounds and countdown beeps via the **Web Audio API**.
+  - One-click high-resolution **PNG download**.
+  - Dedicated **Print Output** modal formatted for standard paper sizing.
 
-------------------------------------------------------------------------
-3. FILE STRUCTURE
-------------------------------------------------------------------------
+---
+
+## 🛠️ Tech Stack & Dependencies
+
+- **Framework**: [Alpine.js](https://alpinejs.dev/) (v3.x) — Lightweight reactivity and state management.
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/) — Utility-first CSS framework (configured via CDN).
+- **Icons**: [FontAwesome](https://fontawesome.com/) (v6.4.0)
+- **Typography**: [Google Fonts](https://fonts.google.com/) (`Fredoka`, `Caveat`, `Pacifico`, `Playfair Display`, `Courier Prime`, `Share Tech Mono`).
+- **Rendering Engine**: Native **HTML5 Canvas API** (2D Context).
+- **Audio Engine**: Native **Web Audio API**.
+
+---
+
+## 📂 Project Structure
+
+```
 photobooth/
 │
-└── index.html         # Main standalone application entry point containing
-                       # HTML layout, Tailwind config, CSS filters,
-                       # and Alpine.js state logic.
+└── index.html       # Standalone HTML file containing UI layout, 
+                     # Tailwind theme configurations, CSS filters, 
+                     # and Alpine.js state logic.
+```
 
-------------------------------------------------------------------------
-4. GETTING STARTED
-------------------------------------------------------------------------
-1. Clone or download the source code files.
-2. Open `index.html` in any modern web browser (Google Chrome, Mozilla Firefox,
-   Microsoft Edge, or Safari).
-3. Allow camera access permissions when prompted by your browser to activate 
-   the live webcam view.
+---
 
-* Note: For camera permissions to function without prompt issues, serve the file 
-  via a local server (e.g., Live Server extension in VS Code or `python -m http.server`) 
-  or HTTPS environment.
+## 🚀 Getting Started
 
-------------------------------------------------------------------------
-5. APPLICATION USAGE GUIDE
-------------------------------------------------------------------------
-1. Frame Your Shot:
-   - Use the top control bar to mirror the feed or toggle audio effects.
-   - Select a preferred Vintage Live Camera Filter from the filter tray.
+### Prerequisites
 
-2. Capture Photos:
-   - Click "Start 4-Photo Countdown Sequence" for an automated shoot sequence.
-   - Alternatively, click "Snap Single" to record one frame at a time.
-   - Hover over captured thumbnails to retake a specific frame if needed.
+All dependencies are loaded via CDN, so no installation of Node.js or npm packages is required. You only need a modern web browser (Google Chrome, Firefox, Safari, Edge).
 
-3. Customize the Strip Layout:
-   - Size & Ratio Tab: Choose 1.5x6", 2x8", or 2x2" grid layout, and set the background theme.
-   - Margins & Text Tab: Adjust spacing sliders and edit the signature title/date.
-   - Film & Effects Tab: Toggle sprocket holes, film grain, and lens vignette.
+### Running the Application
 
-4. Download or Print:
-   - Click "Download HD Strip (PNG)" to save the composite image.
-   - Click "Print Output" to launch the print modal.
+1. **Clone or Download** the repository:
+   ```bash
+   git clone https://github.com/your-username/mimi-vintage-photobooth.git
+   cd mimi-vintage-photobooth
+   ```
 
-------------------------------------------------------------------------
-6. CUSTOMIZATION & STYLING
-------------------------------------------------------------------------
-• Colors & Fonts:
-  The Tailwind configuration inside `index.html` extends default colors with a 
-  custom `hotpink` palette and loads google font mappings.
+2. **Serve the project**:
+   Because browser security policies limit WebRTC camera access on `file://` protocols, serve `index.html` via a local web server:
 
-• Filter Formulas:
-  Custom filter CSS classes (`.filter-sepia`, `.filter-grainy90s`, etc.) and matching 
-  Canvas string definitions in `getCssFilterString()` can be modified to create new visual styles.
+   - **Using VS Code**: Install the [Live Server](https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer) extension, right-click `index.html`, and select **Open with Live Server**.
+   - **Using Python 3**:
+     ```bash
+     python -m http.server 8000
+     ```
+     Then navigate to `http://localhost:8000` in your web browser.
 
-------------------------------------------------------------------------
-7. BROWSER COMPATIBILITY & NOTES
-------------------------------------------------------------------------
-• WebRTC camera access requires HTTPS or `localhost` execution due to browser security policies.
-• If camera access is denied, click "Load Sample Photos" to test strip layouts using generated sample images.
-• Audio effects utilize the Web Audio API and may require user interaction with the page before sound plays.
-========================================================================
+3. **Grant Camera Permissions**:
+   When prompted, allow webcam permissions to start the live video feed. If denied, click **Load Sample Photos** to test the layout engine using demo images.
+
+---
+
+## 📖 Usage Guide
+
+1. **Setup Feed & Filter**:
+   - Toggle camera mirroring or sound effects in the header bar.
+   - Choose a live camera filter preset from the lower panel.
+
+2. **Capture Photos**:
+   - Click **Start 4-Photo Countdown Sequence** to take 4 automatic shots in succession.
+   - Click **Snap Single** to capture individual photos one at a time.
+   - Hover over any captured frame thumbnail in the panel to retake that specific slot.
+
+3. **Customize the Strip**:
+   - **Size & Ratio**: Switch between `1.5x6"`, `2x8"`, or `2x2"` formats and select a background color.
+   - **Margins & Text**: Adjust inner gaps and outer borders, and edit custom text labels.
+   - **Film & Effects**: Toggle sprockets, grain, or vignette overlays on/off.
+
+4. **Export**:
+   - Click **Download HD Strip (PNG)** to save the generated image to your device.
+   - Click **Print Output** to print the photo strip directly.
+
+---
+
+## 🔒 Security & Privacy Notes
+
+- All image capturing, filter processing, and canvas rendering happen **entirely on the client side** (inside your browser).
+- No image data or video feeds are transmitted to external servers.
+
+---
+
+## 📄 License
+
+This project is open-source and available under the [MIT License](LICENSE).
