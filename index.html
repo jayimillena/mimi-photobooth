@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mimi HD Vintage Film Photobooth</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Alpine.js CDN -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Fredoka:wght@400;500;600;700&family=Monoton&family=Pacifico&family=Playfair+Display:ital,wght@0,600;1,600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        hotpink: {
+                            50: '#fdf2f8',
+                            100: '#fce7f3',
+                            200: '#fbcfe8',
+                            300: '#f9a8d4',
+                            400: '#f472b6',
+                            500: '#ec4899',
+                            600: '#db2777',
+                            700: '#be185d',
+                            800: '#9d174d',
+                            900: '#831843',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Fredoka', 'sans-serif'],
+                        script: ['Pacifico', 'cursive'],
+                        handwritten: ['Caveat', 'cursive'],
+                        serif: ['Playfair Display', 'serif'],
+                        mono: ['Courier Prime', 'monospace'],
+                        tech: ['Share Tech Mono', 'monospace'],
+                        retro: ['Monoton', 'cursive']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Real-time Camera Filter Overlays */
+        .filter-normal { filter: none; }
+        .filter-sepia { filter: sepia(0.85) contrast(1.2) brightness(0.9) hue-rotate(-15deg); }
+        .filter-bw { filter: grayscale(1) contrast(1.45) brightness(1.05); }
+        .filter-grainy90s { filter: contrast(1.3) saturate(1.2) brightness(0.95) sepia(0.2); }
+        .filter-softpink { filter: brightness(1.08) contrast(0.95) saturate(1.3) hue-rotate(320deg); }
+        .filter-warmretro { filter: sepia(0.4) saturate(1.4) contrast(1.1) brightness(0.98) hue-rotate(-10deg); }
+        .filter-monofilm { filter: grayscale(1) contrast(1.8) brightness(0.92); }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(236, 72, 153, 0.6);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(219, 39, 119, 0.9);
+        }
+
+        /* Camera Flash Overlay Animation */
+        @keyframes flashAnim {
+            0% { opacity: 0.98; background-color: #ffffff; }
+            100% { opacity: 0; background-color: transparent; }
+        }
+        .flash-active {
+            animation: flashAnim 0.45s ease-out forwards;
+        }
+
+        /* Glassmorphism Panel Styling with Pink Accents */
+        .pink-glass {
+            background: rgba(255, 240, 246, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 182, 217, 0.6);
+        }
+        
+        .dark-pink-glass {
+            background: rgba(157, 23, 77, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(244, 114, 182, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-pink-100 via-rose-200 to-pink-300 min-h-screen text-slate-800 font-sans selection:bg-pink-400 selection:text-white"
+      x-data="photoboothApp()" x-init="initApp()">
+
+    <!-- Camera Flash Overlay -->
+    <div id="flash-overlay" class="fixed inset-0 z-50 pointer-events-none opacity-0"></div>
+
+    <!-- Navigation Header with Modern Pink Styling -->
+    <header class="w-full pink-glass sticky top-0 z-30 px-4 py-3 shadow-sm border-b border-pink-200/50">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-pink-500 to-rose-500 flex items-center justify-center text-white shadow-md shadow-pink-400/40">
+                    <i class="fa-solid font-bold fa-film text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold bg-gradient-to-r from-pink-600 to-rose-600 bg-clip-text text-transparent flex items-center gap-2">
+                        Vintage Film Studio
+                        <span class="text-[10px] bg-pink-200 text-pink-900 font-extrabold px-2 py-0.5 rounded-full border border-pink-300 uppercase tracking-wider" x-text="selectedDimension.label"></span>
+                    </h1>
+                    <p class="text-xs text-pink-700/80 font-medium">Customizable Vintage Photobooth & Strip Studio</p>
+                </div>
+            </div>
+
+            <!-- Quick Controls -->
+            <div class="flex items-center space-x-2">
+                <button @click="toggleMirror()" class="p-2.5 rounded-xl bg-white/80 hover:bg-white text-pink-600 transition-all shadow-sm border border-pink-100 flex items-center gap-1.5 text-xs font-semibold" title="Mirror Camera View">
+                    <i class="fa-solid fa-arrows-left-right text-pink-600"></i>
+                    <span x-text="isMirrored ? 'Mirrored' : 'Normal'" class="hidden sm:inline"></span>
+                </button>
+                <button @click="toggleSound()" class="p-2.5 rounded-xl bg-white/80 hover:bg-white text-pink-600 transition-all shadow-sm border border-pink-100 flex items-center gap-1.5 text-xs font-semibold">
+                    <i class="fa-solid" :class="soundEnabled ? 'fa-volume-high text-pink-600' : 'fa-volume-xmark text-slate-400'"></i>
+                    <span x-text="soundEnabled ? 'Sound On' : 'Muted'" class="hidden sm:inline"></span>
+                </button>
+                <button @click="resetAllPhotos()" class="p-2.5 rounded-xl bg-white/80 hover:bg-white text-rose-600 hover:text-rose-700 transition-all shadow-sm border border-pink-100 flex items-center gap-1.5 text-xs font-semibold">
+                    <i class="fa-solid fa-rotate-left"></i>
+                    <span class="hidden sm:inline">Reset All</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Studio Layout -->
+    <main class="max-w-7xl mx-auto p-3 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <!-- LEFT PANEL: Web Camera Feed, Live Controls, Captured Frames (7 Cols) -->
+        <section class="lg:col-span-7 flex flex-col space-y-5">
+            
+            <!-- Live Webcam Viewport -->
+            <div class="relative w-full rounded-3xl overflow-hidden bg-slate-950 border-4 border-white/90 shadow-2xl shadow-pink-300/50 aspect-[4/3] flex items-center justify-center group">
+                
+                <!-- Webcam Video Element -->
+                <video x-ref="videoElement" 
+                       autoplay 
+                       playsinline 
+                       muted
+                       class="w-full h-full object-cover transition-all duration-300"
+                       :class="[selectedFilter, isMirrored ? '-scale-x-100' : '']"></video>
+
+                <!-- Camera Fallback Overlay -->
+                <template x-if="!cameraActive">
+                    <div class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-slate-950/90 backdrop-blur-md text-white space-y-4 z-20">
+                        <div class="w-16 h-16 rounded-full bg-pink-500/20 flex items-center justify-center text-pink-400 animate-pulse">
+                            <i class="fa-solid fa-video-slash text-2xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-pink-100">Webcam Access Required</h3>
+                            <p class="text-xs text-slate-300 max-w-xs mt-1">Please enable your camera or load sample frames to preview the photobooth.</p>
+                        </div>
+                        <div class="flex flex-wrap gap-2 justify-center">
+                            <button @click="startCamera()" class="px-5 py-2.5 bg-gradient-to-r from-pink-500 to-rose-500 rounded-xl text-white font-semibold text-xs hover:scale-105 transition-transform shadow-lg shadow-pink-500/30">
+                                <i class="fa-solid fa-camera mr-1"></i> Request Camera Access
+                            </button>
+                            <button @click="loadDemoPhotos()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-white font-semibold text-xs hover:scale-105 transition-transform border border-slate-700">
+                                <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Load Sample Photos
+                            </button>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- 3-Second Visual Countdown Display -->
+                <template x-if="isCountingDown">
+                    <div class="absolute inset-0 z-30 flex items-center justify-center bg-black/30 backdrop-blur-[2px]">
+                        <div class="text-center transform animate-bounce">
+                            <span class="text-9xl font-black text-pink-300 drop-shadow-[0_10px_15px_rgba(219,39,119,0.9)] tracking-tighter"
+                                  x-text="countdownValue > 0 ? countdownValue : 'SMILE! 📸'"></span>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Shot Counter Badge -->
+                <div class="absolute top-4 left-4 z-10 px-3 py-1.5 rounded-full dark-pink-glass text-white text-xs font-bold tracking-wide flex items-center gap-2 border border-white/30 shadow-md">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span>SHOT <span x-text="capturedPhotos.length + (isShooting ? 1 : 0)"></span> / 4</span>
+                </div>
+
+                <!-- Active Live Filter Tag -->
+                <div class="absolute top-4 right-4 z-10 px-3 py-1.5 rounded-full dark-pink-glass text-white text-xs font-semibold capitalize border border-white/30 shadow-md flex items-center gap-1.5">
+                    <i class="fa-solid fa-wand-magic-sparkles text-pink-300"></i>
+                    <span x-text="filters.find(f => f.id === selectedFilter)?.name"></span>
+                </div>
+
+                <!-- Live Framing Grid -->
+                <div class="absolute inset-0 pointer-events-none grid grid-cols-3 grid-rows-3 opacity-20 transition-opacity group-hover:opacity-40">
+                    <div class="border-r border-b border-white"></div>
+                    <div class="border-r border-b border-white"></div>
+                    <div class="border-b border-white"></div>
+                    <div class="border-r border-b border-white"></div>
+                    <div class="border-r border-b border-white"></div>
+                    <div class="border-b border-white"></div>
+                    <div class="border-r border-white"></div>
+                    <div class="border-r border-white"></div>
+                    <div></div>
+                </div>
+            </div>
+
+            <!-- Photobooth Shutter Actions -->
+            <div class="pink-glass rounded-2xl p-4 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+                
+                <!-- Main 4-Shot Sequence Button -->
+                <button @click="startPhotoShootSequence()" 
+                        :disabled="isShooting || capturedPhotos.length >= 4 || !cameraActive"
+                        class="w-full sm:flex-1 py-4 px-6 rounded-2xl font-bold text-white text-base sm:text-lg flex items-center justify-center gap-3 shadow-lg transition-all transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                        :class="capturedPhotos.length >= 4 
+                            ? 'bg-slate-400 shadow-slate-300' 
+                            : 'bg-gradient-to-r from-pink-500 via-rose-500 to-hotpink-600 hover:from-pink-600 hover:to-rose-600 shadow-pink-500/40 hover:shadow-pink-500/60'">
+                    <i class="fa-solid fa-camera-retro text-2xl"></i>
+                    <span x-text="isShooting ? 'Capturing 4 Shots...' : (capturedPhotos.length >= 4 ? 'Strip Complete (4/4)' : 'Start 4-Photo Countdown Sequence')"></span>
+                </button>
+
+                <!-- Single Snap Button -->
+                <button @click="snapSinglePhoto()" 
+                        :disabled="isShooting || capturedPhotos.length >= 4 || !cameraActive"
+                        class="w-full sm:w-auto py-4 px-5 rounded-2xl font-semibold text-pink-700 bg-white hover:bg-pink-50 border border-pink-200 shadow-md flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i class="fa-solid fa-bolt text-pink-500"></i>
+                    <span>Snap Single</span>
+                </button>
+            </div>
+
+            <!-- Captured Photo Thumbnails & Retake Options -->
+            <div class="pink-glass rounded-2xl p-4 shadow-md">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-bold text-pink-900 uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-images text-pink-500"></i> Captured Frames 
+                        <span class="text-xs font-normal text-pink-600" x-text="'(' + capturedPhotos.length + '/4)'"></span>
+                    </h3>
+                    <template x-if="capturedPhotos.length > 0">
+                        <button @click="clearPhotos()" class="text-xs text-rose-600 hover:text-rose-800 font-semibold underline">
+                            Clear captures
+                        </button>
+                    </template>
+                </div>
+
+                <div class="grid grid-cols-4 gap-3">
+                    <template x-for="(photo, index) in [0, 1, 2, 3]" :key="index">
+                        <div class="relative aspect-[4/3] rounded-xl bg-slate-900 border-2 border-dashed border-pink-300/80 flex items-center justify-center overflow-hidden group shadow-inner">
+                            <template x-if="capturedPhotos[index]">
+                                <div class="w-full h-full relative">
+                                    <img :src="capturedPhotos[index]" class="w-full h-full object-cover">
+                                    <button @click="retakePhoto(index)" 
+                                            :disabled="!cameraActive"
+                                            title="Retake this frame"
+                                            class="absolute inset-0 bg-pink-950/75 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-xs font-medium gap-1 disabled:hidden">
+                                        <i class="fa-solid fa-arrow-rotate-right text-base"></i>
+                                        <span>Retake #<span x-text="index + 1"></span></span>
+                                    </button>
+                                    <span class="absolute bottom-1 right-1 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded font-mono" x-text="'0' + (index+1)"></span>
+                                </div>
+                            </template>
+                            <template x-if="!capturedPhotos[index]">
+                                <div class="flex flex-col items-center justify-center text-pink-300 text-xs font-bold gap-1">
+                                    <span class="text-lg" x-text="index + 1"></span>
+                                    <span class="text-[10px] uppercase tracking-tighter opacity-60">Empty</span>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Live Camera Filter Presets -->
+            <div class="pink-glass rounded-2xl p-4 shadow-md">
+                <h3 class="text-sm font-bold text-pink-900 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-pink-500"></i> Vintage Live Camera Filters
+                </h3>
+                <div class="flex gap-2 overflow-x-auto pb-1">
+                    <template x-for="filter in filters" :key="filter.id">
+                        <button @click="selectedFilter = filter.id; updateStripCanvas()" 
+                                class="flex-none px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1.5 whitespace-nowrap"
+                                :class="selectedFilter === filter.id 
+                                    ? 'bg-pink-600 text-white border-pink-600 shadow-md shadow-pink-500/30' 
+                                    : 'bg-white/80 text-pink-900 border-pink-200 hover:bg-pink-50'">
+                            <span class="w-2.5 h-2.5 rounded-full" :class="filter.color"></span>
+                            <span x-text="filter.name"></span>
+                        </button>
+                    </template>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- RIGHT PANEL: HD Canvas Renderer & Strip Customizer (5 Cols) -->
+        <section class="lg:col-span-5 flex flex-col space-y-5">
+            
+            <div class="pink-glass rounded-3xl p-5 shadow-2xl space-y-5">
+                
+                <!-- Section Title & Active Size Badge -->
+                <div class="flex items-center justify-between border-b border-pink-200/60 pb-3">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-crop text-pink-600 text-lg"></i>
+                        <h2 class="text-base font-bold text-pink-950">Strip & Layout Studio</h2>
+                    </div>
+                    <span class="text-xs bg-black text-pink-300 font-mono font-bold px-2.5 py-1 rounded-full shadow-sm border border-pink-500/40" x-text="selectedDimension.label"></span>
+                </div>
+
+                <!-- Customizer Tabs -->
+                <div class="flex bg-pink-200/50 p-1 rounded-xl gap-1 text-xs font-bold">
+                    <button @click="activeTab = 'size'" :class="activeTab === 'size' ? 'bg-white text-pink-700 shadow' : 'text-pink-800 hover:text-pink-950'" class="flex-1 py-2 rounded-lg transition-all text-center">
+                        Size & Ratio
+                    </button>
+                    <button @click="activeTab = 'layout'" :class="activeTab === 'layout' ? 'bg-white text-pink-700 shadow' : 'text-pink-800 hover:text-pink-950'" class="flex-1 py-2 rounded-lg transition-all text-center">
+                        Margins & Text
+                    </button>
+                    <button @click="activeTab = 'style'" :class="activeTab === 'style' ? 'bg-white text-pink-700 shadow' : 'text-pink-800 hover:text-pink-950'" class="flex-1 py-2 rounded-lg transition-all text-center">
+                        Film & Effects
+                    </button>
+                </div>
+
+                <!-- TAB 1: Aspect Ratio & Dimension Options -->
+                <div x-show="activeTab === 'size'" class="space-y-4">
+                    <label class="block text-xs font-bold text-pink-900 uppercase tracking-wider">Select Strip Dimension Presets</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <template x-for="dim in dimensionPresets" :key="dim.id">
+                            <button @click="selectedDimensionId = dim.id; updateStripCanvas()" 
+                                    class="p-3 rounded-2xl border text-xs font-bold flex flex-col items-center gap-1 transition-all text-center"
+                                    :class="selectedDimensionId === dim.id 
+                                        ? 'bg-pink-600 text-white border-pink-600 shadow-md shadow-pink-500/30' 
+                                        : 'bg-white/80 text-pink-950 border-pink-200 hover:bg-pink-50'">
+                                <span class="text-sm" x-text="dim.name"></span>
+                                <span class="text-[10px] opacity-80" x-text="dim.aspect"></span>
+                            </button>
+                        </template>
+                    </div>
+
+                    <!-- Background Theme Color Options -->
+                    <div>
+                        <label class="block text-xs font-bold text-pink-900 mb-2 uppercase tracking-wider">Background Theme</label>
+                        <div class="grid grid-cols-4 gap-2">
+                            <template x-for="theme in stripThemes" :key="theme.id">
+                                <button @click="selectedStripTheme = theme.id; updateStripCanvas()" 
+                                        class="p-2 rounded-xl border text-[11px] font-semibold flex flex-col items-center gap-1 transition-all text-center"
+                                        :class="selectedStripTheme === theme.id 
+                                            ? 'bg-pink-600 text-white border-pink-600 shadow' 
+                                            : 'bg-white/70 text-slate-700 border-pink-200 hover:bg-white'">
+                                    <div class="w-full h-3 rounded-sm border border-slate-300" :style="`background-color: ${theme.color}`"></div>
+                                    <span x-text="theme.name" class="truncate w-full text-[10px]"></span>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: Zero-Whitespace, Margins & Text Label Toggles -->
+                <div x-show="activeTab === 'layout'" class="space-y-4">
+                    <!-- Toggle Show Labels / Text -->
+                    <div class="flex items-center justify-between bg-white/80 p-3 rounded-xl border border-pink-200">
+                        <div>
+                            <span class="text-xs font-bold text-pink-950 block">Show Text Labels & Title</span>
+                            <span class="text-[10px] text-pink-700">Display title signature, date & film stock tag</span>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" x-model="enableLabels" @change="updateStripCanvas()" class="sr-only peer">
+                            <div class="w-9 h-5 bg-pink-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-pink-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-pink-600"></div>
+                        </label>
+                    </div>
+
+                    <!-- Whitespace / Margin Slider (Allows 0 Gap) -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs font-bold text-pink-900">White Space / Photo Gap (px)</label>
+                            <span class="text-xs font-mono font-bold text-pink-700" x-text="stripPadding == 0 ? '0px (Seamless)' : stripPadding + 'px'"></span>
+                        </div>
+                        <input type="range" min="0" max="40" x-model="stripPadding" @input="updateStripCanvas()" class="w-full accent-pink-600">
+                        <div class="flex justify-between text-[10px] text-pink-800 font-bold">
+                            <span class="text-emerald-700">0px (Zero Gap)</span>
+                            <span>Standard Gap</span>
+                            <span>Wide Border</span>
+                        </div>
+                    </div>
+
+                    <!-- Outer Side Padding Control -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs font-bold text-pink-900">Outer Margin Padding (px)</label>
+                            <span class="text-xs font-mono font-bold text-pink-700" x-text="outerMargin == 0 ? '0px (Full Fit)' : outerMargin + 'px'"></span>
+                        </div>
+                        <input type="range" min="0" max="60" x-model="outerMargin" @input="updateStripCanvas()" class="w-full accent-pink-600">
+                    </div>
+
+                    <!-- Editable Text Inputs (Only active when labels enabled) -->
+                    <div x-show="enableLabels" class="space-y-3 pt-2 border-t border-pink-200/50">
+                        <div>
+                            <label class="block text-xs font-bold text-pink-900 mb-1">Custom Title / Signature</label>
+                            <input type="text" x-model="frameTitle" @input="updateStripCanvas()" 
+                                   placeholder="e.g. Memory Strip • Paris" 
+                                   class="w-full px-3 py-2 rounded-xl border border-pink-300 text-xs focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white/80">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-xs font-bold text-pink-900 mb-1">Date Stamp</label>
+                                <input type="text" x-model="frameDate" @input="updateStripCanvas()" 
+                                       class="w-full px-3 py-2 rounded-xl border border-pink-300 text-xs font-mono bg-white/80">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-pink-900 mb-1">Font Style</label>
+                                <select x-model="selectedFont" @change="updateStripCanvas()" class="w-full px-3 py-2 rounded-xl border border-pink-300 text-xs bg-white/80 font-medium">
+                                    <option value="Share Tech Mono">Share Tech (Analog Mono)</option>
+                                    <option value="Courier Prime">Courier Vintage Mono</option>
+                                    <option value="Caveat">Caveat Cursive</option>
+                                    <option value="Pacifico">Pacifico Bold Script</option>
+                                    <option value="Playfair Display">Playfair Serif</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 3: Vintage Film Sprockets, Grain & Lens Effects -->
+                <div x-show="activeTab === 'style'" class="space-y-4">
+                    <!-- Film Roll Sprocket Perforations Toggle -->
+                    <div class="flex items-center justify-between bg-white/80 p-3 rounded-xl border border-pink-200">
+                        <div>
+                            <span class="text-xs font-bold text-pink-950 block">35mm Sprocket Perforations</span>
+                            <span class="text-[10px] text-pink-700">Realistic analog side film roll holes</span>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" x-model="enableSprockets" @change="updateStripCanvas()" class="sr-only peer">
+                            <div class="w-9 h-5 bg-pink-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-pink-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-pink-600"></div>
+                        </label>
+                    </div>
+
+                    <!-- Film Grain Effect Toggle -->
+                    <div class="flex items-center justify-between bg-white/80 p-3 rounded-xl border border-pink-200">
+                        <div>
+                            <span class="text-xs font-bold text-pink-950 block">Silver Halide Film Grain</span>
+                            <span class="text-[10px] text-pink-700">Simulates real ISO 400 chemical noise</span>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" x-model="enableFilmGrain" @change="updateStripCanvas()" class="sr-only peer">
+                            <div class="w-9 h-5 bg-pink-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-pink-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-pink-600"></div>
+                        </label>
+                    </div>
+
+                    <!-- Vignette Effect Toggle -->
+                    <div class="flex items-center justify-between bg-white/80 p-3 rounded-xl border border-pink-200">
+                        <div>
+                            <span class="text-xs font-bold text-pink-950 block">Vintage Lens Vignette</span>
+                            <span class="text-[10px] text-pink-700">Subtle lens edge shading</span>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" x-model="enableVignette" @change="updateStripCanvas()" class="sr-only peer">
+                            <div class="w-9 h-5 bg-pink-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-pink-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-pink-600"></div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- HD Rendered Canvas Preview Container -->
+                <div class="flex flex-col items-center justify-center p-4 bg-slate-950 rounded-2xl border border-pink-200/40 shadow-2xl relative">
+                    <div class="flex items-center justify-between w-full mb-3 text-pink-200 text-xs font-bold px-2">
+                        <span class="uppercase tracking-wider flex items-center gap-1.5 font-mono" x-text="selectedDimension.label"></span>
+                        <span class="font-mono text-[10px] text-pink-300 bg-pink-950/80 px-2 py-0.5 rounded border border-pink-500/30">HD Canvas Render</span>
+                    </div>
+
+                    <!-- Live Canvas Preview Frame -->
+                    <div class="shadow-2xl rounded overflow-hidden h-[440px] flex justify-center bg-black border border-slate-800 relative max-w-full">
+                        <canvas x-ref="stripCanvas" class="h-full w-auto block object-contain"></canvas>
+                    </div>
+
+                    <p class="text-[10px] text-slate-400 mt-2 font-mono">Real-time HTML5 Vector Render • Print Scale Ready</p>
+                </div>
+
+                <!-- Export & Print Actions -->
+                <div class="flex flex-col sm:flex-row items-center gap-3 pt-2">
+                    <button @click="downloadStrip()" 
+                            :disabled="capturedPhotos.length === 0"
+                            class="w-full sm:flex-1 py-3.5 px-5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-sm shadow-lg shadow-teal-500/30 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fa-solid fa-download text-base"></i>
+                        <span>Download HD Strip (PNG)</span>
+                    </button>
+
+                    <button @click="printStrip()" 
+                            :disabled="capturedPhotos.length === 0"
+                            class="w-full sm:w-auto py-3.5 px-4 rounded-2xl bg-white hover:bg-pink-50 text-pink-700 font-bold text-sm border border-pink-300 shadow-md flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fa-solid fa-print"></i>
+                        <span>Print Output</span>
+                    </button>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="max-w-7xl mx-auto py-6 text-center text-xs text-pink-700/80 font-medium">
+        <p>✨ HD Vintage Film Studio Photobooth • Built with Alpine.js, Tailwind CSS & Canvas API ✨</p>
+    </footer>
+
+    <!-- Alpine.js Main Photobooth Application Logic -->
+    <script>
+        function photoboothApp() {
+            return {
+                // Camera State
+                cameraActive: false,
+                stream: null,
+                isMirrored: true,
+                
+                // Photo Shoot Sequence State
+                isShooting: false,
+                isCountingDown: false,
+                countdownValue: 3,
+                capturedPhotos: [],
+                
+                // Web Audio Context
+                soundEnabled: true,
+                audioCtx: null,
+
+                // Active Customizer Tab
+                activeTab: 'size',
+
+                // Camera Live Filter Options
+                selectedFilter: 'filter-sepia',
+                filters: [
+                    { id: 'filter-sepia', name: 'Vintage Sepia', color: 'bg-amber-600' },
+                    { id: 'filter-monofilm', name: 'Monochrome Film', color: 'bg-slate-900' },
+                    { id: 'filter-warmretro', name: 'Warm Retro', color: 'bg-orange-500' },
+                    { id: 'filter-softpink', name: 'Cyber Pink', color: 'bg-pink-400' },
+                    { id: 'filter-bw', name: 'Grainy B&W', color: 'bg-slate-700' },
+                    { id: 'filter-grainy90s', name: '90s Color Film', color: 'bg-yellow-600' },
+                    { id: 'filter-normal', name: 'Standard Color', color: 'bg-slate-400' }
+                ],
+
+                // Preset Dimensions (2x2", 2x8", 1.5x6")
+                selectedDimensionId: '1.5x6',
+                dimensionPresets: [
+                    { id: '1.5x6', name: '1.5 x 6 Inches', aspect: '38 × 152 mm (1:4)', label: '1.5 × 6" Strip', width: 600, height: 2400, layout: 'vertical' },
+                    { id: '2x8', name: '2 x 8 Inches', aspect: '50 × 200 mm (1:4)', label: '2 × 8" Extended Strip', width: 800, height: 3200, layout: 'vertical' },
+                    { id: '2x2', name: '2 x 2 Inches', aspect: '50 × 50 mm (1:1 Grid)', label: '2 × 2" Grid Layout', width: 1200, height: 1200, layout: 'grid' }
+                ],
+
+                get selectedDimension() {
+                    return this.dimensionPresets.find(d => d.id === this.selectedDimensionId) || this.dimensionPresets[0];
+                },
+
+                // Strip Background Theme Colors (Deep Black Default)
+                selectedStripTheme: 'black',
+                stripThemes: [
+                    { id: 'black', name: 'Classic Black', color: '#0a0a0a' },
+                    { id: 'charcoal', name: 'Charcoal', color: '#18181b' },
+                    { id: 'pink', name: 'Vintage Pink', color: '#831843' },
+                    { id: 'white', name: 'Polaroid White', color: '#ffffff' }
+                ],
+
+                // Layout & Margin Controls
+                enableLabels: true,
+                stripPadding: 16, // White space between photos (can be 0)
+                outerMargin: 24,   // Outer side padding (can be 0)
+
+                // Customizable Text & Fonts
+                filmBrandText: 'KODAK PORTRA 400',
+                frameTitle: 'Vintage Photobooth',
+                frameDate: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }).toUpperCase(),
+                selectedFont: 'Share Tech Mono',
+                markingColor: '#f59e0b',
+
+                // Film Effects
+                enableSprockets: true,
+                enableFilmGrain: true,
+                enableVignette: true,
+
+                // Initialize Photobooth Application
+                initApp() {
+                    this.startCamera();
+                    this.$nextTick(() => {
+                        this.updateStripCanvas();
+                    });
+                },
+
+                // Request WebRTC Camera Permissions
+                async startCamera() {
+                    try {
+                        const constraints = {
+                            video: {
+                                width: { ideal: 1280 },
+                                height: { ideal: 960 },
+                                facingMode: "user"
+                            },
+                            audio: false
+                        };
+                        this.stream = await navigator.mediaDevices.getUserMedia(constraints);
+                        this.$refs.videoElement.srcObject = this.stream;
+                        this.cameraActive = true;
+                    } catch (err) {
+                        console.warn("Webcam access restricted or unavailable. Fallback demo photos available.", err);
+                        this.cameraActive = false;
+                        this.loadDemoPhotos();
+                    }
+                },
+
+                toggleMirror() {
+                    this.isMirrored = !this.isMirrored;
+                },
+
+                // Load Fallback Demo Photos
+                loadDemoPhotos() {
+                    this.capturedPhotos = [];
+                    const demoGradients = [
+                        ['#ec4899', '#f472b6'],
+                        ['#f43f5e', '#fb7185'],
+                        ['#d946ef', '#e879f9'],
+                        ['#be185d', '#f472b6']
+                    ];
+
+                    demoGradients.forEach((grads, idx) => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = 640;
+                        canvas.height = 480;
+                        const ctx = canvas.getContext('2d');
+
+                        const gradient = ctx.createLinearGradient(0, 0, 640, 480);
+                        gradient.addColorStop(0, grads[0]);
+                        gradient.addColorStop(1, grads[1]);
+                        ctx.fillStyle = gradient;
+                        ctx.fillRect(0, 0, 640, 480);
+
+                        ctx.fillStyle = '#ffffff';
+                        ctx.font = 'bold 36px Fredoka, sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(`Vintage Shot #${idx + 1}`, 320, 220);
+                        ctx.font = '22px Caveat, cursive';
+                        ctx.fillText('✨ 35mm Analog Film Preview ✨', 320, 270);
+
+                        this.capturedPhotos.push(canvas.toDataURL('image/png'));
+                    });
+
+                    this.updateStripCanvas();
+                },
+
+                // Synthesized Web Audio API Beeps & Shutter Sounds
+                playBeep(freq = 600, duration = 0.1) {
+                    if (!this.soundEnabled) return;
+                    try {
+                        if (!this.audioCtx) {
+                            this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                        }
+                        const osc = this.audioCtx.createOscillator();
+                        const gain = this.audioCtx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.value = freq;
+                        gain.gain.setValueAtTime(0.15, this.audioCtx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.0001, this.audioCtx.currentTime + duration);
+                        osc.connect(gain);
+                        gain.connect(this.audioCtx.destination);
+                        osc.start();
+                        osc.stop(this.audioCtx.currentTime + duration);
+                    } catch (e) {
+                        console.log("Audio autoplay restricted");
+                    }
+                },
+
+                playShutterSound() {
+                    if (!this.soundEnabled) return;
+                    this.playBeep(1200, 0.05);
+                    setTimeout(() => this.playBeep(800, 0.15), 50);
+                },
+
+                toggleSound() {
+                    this.soundEnabled = !this.soundEnabled;
+                },
+
+                triggerFlash() {
+                    const flash = document.getElementById('flash-overlay');
+                    flash.classList.remove('flash-active');
+                    void flash.offsetWidth;
+                    flash.classList.add('flash-active');
+                    this.playShutterSound();
+                },
+
+                // 4-Shot Countdown Sequence
+                async startPhotoShootSequence() {
+                    if (this.isShooting || !this.cameraActive) return;
+                    this.isShooting = true;
+                    this.capturedPhotos = [];
+
+                    for (let i = 0; i < 4; i++) {
+                        await this.runCountdown();
+                        this.triggerFlash();
+                        this.captureFrame();
+                        this.updateStripCanvas();
+                        await new Promise(resolve => setTimeout(resolve, 800));
+                    }
+
+                    this.isShooting = false;
+                },
+
+                // 3-Second Visual Countdown
+                runCountdown() {
+                    return new Promise((resolve) => {
+                        this.isCountingDown = true;
+                        this.countdownValue = 3;
+                        this.playBeep(500, 0.08);
+
+                        const timer = setInterval(() => {
+                            this.countdownValue--;
+                            if (this.countdownValue > 0) {
+                                this.playBeep(500, 0.08);
+                            } else if (this.countdownValue === 0) {
+                                this.playBeep(900, 0.12);
+                            } else {
+                                clearInterval(timer);
+                                this.isCountingDown = false;
+                                resolve();
+                            }
+                        }, 1000);
+                    });
+                },
+
+                // Single Photo Snap
+                snapSinglePhoto() {
+                    if (this.capturedPhotos.length >= 4 || !this.cameraActive) return;
+                    this.triggerFlash();
+                    this.captureFrame();
+                    this.updateStripCanvas();
+                },
+
+                // Retake Specific Frame
+                async retakePhoto(index) {
+                    if (this.isShooting || !this.cameraActive) return;
+                    await this.runCountdown();
+                    this.triggerFlash();
+                    
+                    const canvas = document.createElement('canvas');
+                    const video = this.$refs.videoElement;
+                    canvas.width = video.videoWidth || 640;
+                    canvas.height = video.videoHeight || 480;
+                    const ctx = canvas.getContext('2d');
+
+                    ctx.filter = this.getCssFilterString(this.selectedFilter);
+
+                    if (this.isMirrored) {
+                        ctx.translate(canvas.width, 0);
+                        ctx.scale(-1, 1);
+                    }
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                    this.capturedPhotos[index] = canvas.toDataURL('image/png');
+                    this.updateStripCanvas();
+                },
+
+                captureFrame() {
+                    const video = this.$refs.videoElement;
+                    const canvas = document.createElement('canvas');
+                    canvas.width = video.videoWidth || 640;
+                    canvas.height = video.videoHeight || 480;
+                    const ctx = canvas.getContext('2d');
+
+                    ctx.filter = this.getCssFilterString(this.selectedFilter);
+
+                    if (this.isMirrored) {
+                        ctx.translate(canvas.width, 0);
+                        ctx.scale(-1, 1);
+                    }
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                    this.capturedPhotos.push(canvas.toDataURL('image/png'));
+                },
+
+                getCssFilterString(filterId) {
+                    switch (filterId) {
+                        case 'filter-sepia': return 'sepia(0.85) contrast(1.2) brightness(0.9)';
+                        case 'filter-monofilm': return 'grayscale(1) contrast(1.8) brightness(0.92)';
+                        case 'filter-warmretro': return 'sepia(0.4) saturate(1.4) contrast(1.1) brightness(0.98)';
+                        case 'filter-softpink': return 'brightness(1.08) contrast(0.95) saturate(1.3) hue-rotate(320deg)';
+                        case 'filter-bw': return 'grayscale(1) contrast(1.45) brightness(1.05)';
+                        case 'filter-grainy90s': return 'contrast(1.3) saturate(1.2) brightness(0.95) sepia(0.2)';
+                        default: return 'none';
+                    }
+                },
+
+                clearPhotos() {
+                    this.capturedPhotos = [];
+                    this.updateStripCanvas();
+                },
+
+                resetAllPhotos() {
+                    this.capturedPhotos = [];
+                    this.selectedFilter = 'filter-sepia';
+                    this.selectedDimensionId = '1.5x6';
+                    this.selectedStripTheme = 'black';
+                    this.enableLabels = true;
+                    this.stripPadding = 16;
+                    this.outerMargin = 24;
+                    this.enableSprockets = true;
+                    this.updateStripCanvas();
+                },
+
+                // CANVAS RENDER LOGIC SUPPORTING 2x2, 2x8, 1.5x6 AND ZERO-WHITESPACE
+                async updateStripCanvas() {
+                    const canvas = this.$refs.stripCanvas;
+                    if (!canvas) return;
+                    const ctx = canvas.getContext('2d');
+
+                    const dim = this.selectedDimension;
+                    const w = dim.width;
+                    const h = dim.height;
+
+                    canvas.width = w;
+                    canvas.height = h;
+
+                    // Background Theme Color
+                    let bgColor = '#0a0a0a';
+                    if (this.selectedStripTheme === 'charcoal') bgColor = '#18181b';
+                    if (this.selectedStripTheme === 'pink') bgColor = '#831843';
+                    if (this.selectedStripTheme === 'white') bgColor = '#ffffff';
+
+                    ctx.fillStyle = bgColor;
+                    ctx.fillRect(0, 0, w, h);
+
+                    // Preload Photo Elements
+                    const loadedImages = await Promise.all([0, 1, 2, 3].map(i => {
+                        return new Promise((resolve) => {
+                            if (this.capturedPhotos[i]) {
+                                const img = new Image();
+                                img.onload = () => resolve(img);
+                                img.src = this.capturedPhotos[i];
+                            } else {
+                                resolve(null);
+                            }
+                        });
+                    }));
+
+                    const outerM = parseInt(this.outerMargin);
+                    const innerP = parseInt(this.stripPadding);
+
+                    // Render 2x2 Grid Layout
+                    if (dim.layout === 'grid') {
+                        const topHeader = this.enableLabels ? 80 : outerM;
+                        const bottomFooter = this.enableLabels ? 100 : outerM;
+                        
+                        const gridW = (w - (outerM * 2) - innerP) / 2;
+                        const gridH = (h - topHeader - bottomFooter - innerP) / 2;
+
+                        const gridCoords = [
+                            { x: outerM, y: topHeader },
+                            { x: outerM + gridW + innerP, y: topHeader },
+                            { x: outerM, y: topHeader + gridH + innerP },
+                            { x: outerM + gridW + innerP, y: topHeader + gridH + innerP }
+                        ];
+
+                        gridCoords.forEach((coord, idx) => {
+                            const img = loadedImages[idx];
+                            if (img) {
+                                ctx.drawImage(img, coord.x, coord.y, gridW, gridH);
+                            } else {
+                                this.drawEmptyFrame(ctx, coord.x, coord.y, gridW, gridH, idx + 1);
+                            }
+                        });
+
+                        if (this.enableLabels) {
+                            ctx.fillStyle = this.selectedStripTheme === 'white' ? '#18181b' : '#ffffff';
+                            ctx.font = `bold 42px "${this.selectedFont}", sans-serif`;
+                            ctx.textAlign = 'center';
+                            ctx.fillText(this.frameTitle || "Vintage Photobooth", w / 2, h - 45);
+                        }
+                    } 
+                    // Render 1.5x6" and 2x8" Vertical Strips
+                    else {
+                        const sideMargin = this.enableSprockets ? Math.max(outerM, 50) : outerM;
+                        
+                        // Side Film Roll Sprockets
+                        if (this.enableSprockets && this.selectedStripTheme !== 'white') {
+                            ctx.fillStyle = '#000000';
+                            const sprocketW = Math.floor(w * 0.04);
+                            const sprocketH = Math.floor(sprocketW * 1.5);
+                            const radius = 4;
+
+                            for (let y = 30; y < h - 30; y += sprocketH + 25) {
+                                this.drawRoundedRect(ctx, 12, y, sprocketW, sprocketH, radius);
+                                this.drawRoundedRect(ctx, w - 12 - sprocketW, y, sprocketW, sprocketH, radius);
+                            }
+                        }
+
+                        const availableW = w - (sideMargin * 2);
+                        const photoW = availableW;
+                        const photoH = Math.floor(photoW * 0.75); // 4:3 Aspect Ratio
+                        
+                        const topHeader = this.enableLabels ? 70 : outerM;
+                        const bottomFooter = this.enableLabels ? 120 : outerM;
+
+                        for (let i = 0; i < 4; i++) {
+                            const img = loadedImages[i];
+                            const y = topHeader + (i * (photoH + innerP));
+
+                            if (img) {
+                                ctx.drawImage(img, sideMargin, y, photoW, photoH);
+                            } else {
+                                this.drawEmptyFrame(ctx, sideMargin, y, photoW, photoH, i + 1);
+                            }
+                        }
+
+                        // Footer Text & Labels
+                        if (this.enableLabels) {
+                            const footerY = topHeader + (4 * (photoH + innerP)) + 15;
+                            ctx.save();
+                            ctx.textAlign = 'center';
+
+                            ctx.fillStyle = this.selectedStripTheme === 'white' ? '#18181b' : '#ffffff';
+                            ctx.font = `bold ${Math.floor(w * 0.06)}px "${this.selectedFont}", sans-serif`;
+                            ctx.fillText(this.frameTitle || "Vintage Photobooth", w / 2, footerY + 35, photoW);
+
+                            ctx.fillStyle = this.markingColor;
+                            ctx.font = `bold ${Math.floor(w * 0.03)}px "Courier Prime", monospace`;
+                            ctx.fillText(this.frameDate || "", w / 2, footerY + 70);
+
+                            ctx.restore();
+                        }
+                    }
+
+                    // Film Noise & Vignette Post Processing
+                    if (this.enableFilmGrain) {
+                        this.addFilmGrainNoise(ctx, w, h);
+                    }
+
+                    if (this.enableVignette) {
+                        this.addVignette(ctx, w, h);
+                    }
+                },
+
+                drawEmptyFrame(ctx, x, y, width, height, num) {
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+                    ctx.fillRect(x, y, width, height);
+                    ctx.strokeStyle = 'rgba(244, 114, 182, 0.4)';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([6, 6]);
+                    ctx.strokeRect(x + 5, y + 5, width - 10, height - 10);
+                    ctx.setLineDash([]);
+
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+                    ctx.font = 'bold 24px Fredoka, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(`FRAME 0${num}`, x + width / 2, y + height / 2);
+                },
+
+                drawRoundedRect(ctx, x, y, width, height, radius) {
+                    ctx.beginPath();
+                    ctx.moveTo(x + radius, y);
+                    ctx.lineTo(x + width - radius, y);
+                    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+                    ctx.lineTo(x + width, y + height - radius);
+                    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+                    ctx.lineTo(x + radius, y + height);
+                    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+                    ctx.lineTo(x, y + radius);
+                    ctx.quadraticCurveTo(x, y, x + radius, y);
+                    ctx.closePath();
+                    ctx.fill();
+                },
+
+                addFilmGrainNoise(ctx, w, h) {
+                    const imgData = ctx.getImageData(0, 0, w, h);
+                    const data = imgData.data;
+                    
+                    for (let i = 0; i < data.length; i += 4) {
+                        const noise = (Math.random() - 0.5) * 22;
+                        data[i] = Math.min(255, Math.max(0, data[i] + noise));
+                        data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + noise));
+                        data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + noise));
+                    }
+                    
+                    ctx.putImageData(imgData, 0, 0);
+                },
+
+                addVignette(ctx, w, h) {
+                    const gradient = ctx.createRadialGradient(w / 2, h / 2, w * 0.5, w / 2, h / 2, h * 0.85);
+                    gradient.addColorStop(0, 'rgba(0,0,0,0)');
+                    gradient.addColorStop(1, 'rgba(0,0,0,0.45)');
+                    ctx.fillStyle = gradient;
+                    ctx.fillRect(0, 0, w, h);
+                },
+
+                downloadStrip() {
+                    const canvas = this.$refs.stripCanvas;
+                    if (!canvas) return;
+
+                    const link = document.createElement('a');
+                    link.download = `vintage-film-strip-${this.selectedDimensionId}-${Date.now()}.png`;
+                    link.href = canvas.toDataURL('image/png', 1.0);
+                    link.click();
+                },
+
+                printStrip() {
+                    const canvas = this.$refs.stripCanvas;
+                    if (!canvas) return;
+
+                    const dataUrl = canvas.toDataURL('image/png');
+                    const printWindow = window.open('', '_blank');
+                    printWindow.document.write(`
+                        <html>
+                            <head>
+                                <title>Print Vintage Photobooth Output</title>
+                                <style>
+                                    @page {
+                                        size: auto;
+                                        margin: 0;
+                                    }
+                                    body {
+                                        margin: 0;
+                                        padding: 0;
+                                        display: flex;
+                                        justify-content: center;
+                                        align-items: center;
+                                        min-height: 100vh;
+                                        background: #09090b;
+                                    }
+                                    img {
+                                        max-height: 95vh;
+                                        max-width: 95vw;
+                                        object-fit: contain;
+                                    }
+                                    @media print {
+                                        body { background: none; }
+                                        img { max-height: 100%; max-width: 100%; }
+                                    }
+                                </style>
+                            </head>
+                            <body>
+                                <img src="${dataUrl}" onload="window.print();window.close();"/>
+                            </body>
+                        </html>
+                    `);
+                    printWindow.document.close();
+                }
+            }
+        }
+    </script>
+</body>
+</html>
